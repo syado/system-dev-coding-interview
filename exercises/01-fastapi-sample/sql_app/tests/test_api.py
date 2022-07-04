@@ -127,6 +127,7 @@ def test_create_multi_item(test_db, client):
     assert data3["owner_id"] == user_id 
     item_id1 = data3["id"]
     
+    # POST /users/{user_id}/items
     data4 = post_users_userid_items(token, user_id, ITEM2, ITEM_DES2, client)
     assert data4["title"] == ITEM2
     assert data4["description"] == ITEM_DES2
@@ -170,22 +171,27 @@ def test_delete_user(test_db, client):
     data3 = post_users_userid_items(token, user_id, ITEM1, ITEM_DES1, client)
     item_id = data3["id"]
     
-    # GET /users/{user_id}/delete
+    # POST /users/
     data4 = post_users(EMAIL2, PASSWORD2, client)
     user_id2 = data4["id"]
+    # POST /users/
     data5 = post_users(EMAIL3, PASSWORD3, client)
     user_id3 = data5["id"]
     
     destination_user = min([user_id2, user_id3])
+    
+    # POST /users/{user_id}/items
     data6 = post_users_userid_items(token, destination_user, ITEM2, ITEM_DES2, client)
     item_id2 = data6["id"]
     
+    # GET /users/{user_id}/delete
     data7 = get_users_userid_delete(token, user_id, client)
     assert data7["email"] == EMAIL1
     assert data7["id"] == user_id
     assert data7["is_active"] == False
     assert len(data7["items"]) == 0
     
+    # GET /users/{user_id}
     data8 = get_users_userid(token, destination_user, client)
     itemlist = [item_id, item_id2] 
     for i in data8["items"]:
