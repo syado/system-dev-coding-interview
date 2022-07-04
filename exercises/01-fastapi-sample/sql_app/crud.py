@@ -1,3 +1,4 @@
+from locale import strcoll
 from sqlalchemy.orm import Session
 
 from . import models, schemas
@@ -24,8 +25,24 @@ def create_user(db: Session, user: schemas.UserCreate):
     return db_user
 
 
+def delete_user(db: Session, db_user: models.User):
+    db_user.is_active = False
+    db.commit()
+    destination_user = db.query(models.User).filter(models.User.is_active == True).order_by(models.User.id).first()
+    if destination_user:
+        destination_user.items += db_user.items
+        db_user.items = []
+        db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
 def get_items(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Item).offset(skip).limit(limit).all()
+
+
+def get_items_by_user(db: Session, user_id: str, skip: int = 0, limit: int = 100):
+    return db.query(models.Item).filter(models.Item.owner_id == user_id).offset(skip).limit(limit).all()
 
 
 def create_user_item(db: Session, item: schemas.ItemCreate, user_id: int):
@@ -34,3 +51,12 @@ def create_user_item(db: Session, item: schemas.ItemCreate, user_id: int):
     db.commit()
     db.refresh(db_item)
     return db_item
+
+
+def get_token_by_user(db: Session, user_id: int):
+    return db.query(models.Token).filter(models.Token.user_id == user_id).first()
+
+
+def get_token(db: Session, access_token: str):
+    return db.query(models.Token).filter(models.Token.access_token == access_token).first()
+
